@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drone AI — Command Interface</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Barlow+Condensed:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+
+<!-- ── Config Bar ─────────────────────────────────────────── -->
+<header class="cfg-bar">
+  <div class="cfg-brand">
+    <div class="brand-mark">◈</div>
+    <div class="brand-name">DRONE<em>AI</em></div>
+  </div>
+
+  <div class="cfg-fields">
+    <div class="cfg-group">
+      <label class="cfg-label">DRONE URL</label>
+      <input id="inp-drone" class="cfg-input wide" type="url"
+        placeholder="http://192.168.x.x:5000 or ngrok URL"
+        autocomplete="off" spellcheck="false">
+    </div>
+
+    <div class="cfg-sep"></div>
+
+    <div class="cfg-group">
+      <label class="cfg-label">LLM MODE</label>
+      <div class="mode-toggle">
+        <button class="mode-btn active" data-mode="ollama">OLLAMA</button>
+        <button class="mode-btn" data-mode="openai">API</button>
+      </div>
+    </div>
+
+    <div class="cfg-group">
+      <label class="cfg-label">LLM URL</label>
+      <input id="inp-llmurl" class="cfg-input" type="url"
+        placeholder="http://localhost:11434"
+        autocomplete="off" spellcheck="false">
+    </div>
+
+    <div class="cfg-group">
+      <label class="cfg-label">MODEL</label>
+      <input id="inp-model" class="cfg-input narrow"
+        placeholder="qwen2.5:7b"
+        autocomplete="off" spellcheck="false">
+    </div>
+
+    <div id="apikey-group" class="cfg-group" style="display:none">
+      <label class="cfg-label">API KEY</label>
+      <input id="inp-apikey" class="cfg-input" type="password" placeholder="sk-…">
+    </div>
+
+    <button id="btn-connect" class="cfg-connect">CONNECT</button>
+  </div>
+
+  <div class="cfg-status">
+    <div id="conn-dot" class="conn-dot"></div>
+    <span id="dot-label" class="dot-label">OFFLINE</span>
+  </div>
+</header>
+
+<!-- ── Chat Area ──────────────────────────────────────────── -->
+<main id="chat-area" class="chat-area">
+  <div id="chat-inner" class="chat-inner">
+
+    <div class="welcome-card">
+      <div class="welcome-icon">◈</div>
+      <div class="welcome-body">
+        <div class="welcome-title">DRONE AI COMMAND INTERFACE</div>
+        <div class="welcome-sub">
+          Configure your drone + LLM connection above, then issue flight commands in natural language.
+        </div>
+        <div class="welcome-examples">
+          <div class="example-item"><span class="ex-badge">NLP</span>"Arm the drone and take off to 3 meters"</div>
+          <div class="example-item"><span class="ex-badge">NLP</span>"Move forward 2 meters then rotate right 90 degrees"</div>
+          <div class="example-item"><span class="ex-badge">NLP</span>"What is the current battery level and GPS status?"</div>
+          <div class="example-item"><span class="ex-badge">NLP</span>"Land immediately, the battery is getting low"</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- ── Input Bar ──────────────────────────────────────────── -->
+<footer class="input-bar">
+  <div id="input-wrap" class="input-wrap">
+    <span class="input-caret">›</span>
+    <textarea id="user-input" class="user-input"
+      placeholder="Issue a flight command…" rows="1"></textarea>
+    <button id="send-btn" class="send-btn" disabled>
+      <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
+      </svg>
+    </button>
+  </div>
+  <div class="hints">
+    <span class="hint" data-cmd="take off to 3 meters">"take off to 3 meters"</span>
+    <span class="hint-dot">·</span>
+    <span class="hint" data-cmd="move forward 2 meters">"move forward 2m"</span>
+    <span class="hint-dot">·</span>
+    <span class="hint" data-cmd="rotate right 90 degrees">"rotate 90° right"</span>
+    <span class="hint-dot">·</span>
+    <span class="hint" data-cmd="what is the drone status">"drone status"</span>
+    <span class="hint-dot">·</span>
+    <span class="hint" data-cmd="land now">"land now"</span>
+  </div>
+</footer>
+
+<script src="static/js/app.js"></script>
+</body>
+</html>
