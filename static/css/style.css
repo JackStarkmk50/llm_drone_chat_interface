@@ -430,56 +430,91 @@ body::after {
 
 /* ── Tool chips ──────────────────────────────────────────── */
 .tool-chip {
-  display: flex;
-  align-items: flex-start;
-  gap: .5rem;
-  padding: .5rem .875rem;
   border-radius: var(--radius);
   font-family: var(--mono);
   font-size: .68rem;
   animation: slide-up .15s ease-out both;
-  line-height: 1.5;
+  overflow: hidden;
 }
 
 .tool-chip.call {
-  background: var(--amber-dim);
-  border: 1px solid rgba(245, 158, 11, 0.22);
+  background: rgba(245, 158, 11, 0.05);
+  border: 1px solid rgba(245, 158, 11, 0.2);
 }
 
-.tool-chip.result {
+.tool-chip.result.ok {
   background: rgba(52, 217, 101, 0.04);
-  border: 1px solid rgba(52, 217, 101, 0.1);
+  border: 1px solid rgba(52, 217, 101, 0.14);
 }
 
+.tool-chip.result.fail,
 .tool-chip.error {
   background: var(--red-dim);
   border: 1px solid rgba(244, 63, 63, 0.25);
-  color: var(--red);
 }
 
-.chip-ico { flex-shrink: 0; }
+/* Header row */
+.chip-head {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .5rem .875rem;
+}
 
+.chip-ico        { font-size: .8rem; flex-shrink: 0; }
 .chip-ico.call   { color: var(--amber); }
-.chip-ico.result { color: var(--green); }
+.chip-ico.ok     { color: var(--green); }
+.chip-ico.fail   { color: var(--red); }
 
 .chip-tag {
-  letter-spacing: .1em;
-  flex-shrink: 0;
-}
-
-.chip-tag.call   { color: var(--amber); }
-.chip-tag.result { color: var(--green); }
-
-.chip-name {
-  color: var(--text);
-  letter-spacing: .05em;
+  font-size: .55rem;
   font-weight: 700;
+  letter-spacing: .12em;
+  padding: .1rem .35rem;
+  border-radius: 2px;
   flex-shrink: 0;
 }
 
-.chip-args {
+.chip-tag.call { color: var(--amber); background: rgba(245,158,11,.12); }
+.chip-tag.ok   { color: var(--green); background: rgba(52,217,101,.1); }
+.chip-tag.fail { color: var(--red);   background: rgba(244,63,63,.1); }
+
+.chip-fn {
+  color: var(--text);
+  font-weight: 700;
+  letter-spacing: .06em;
+}
+
+.chip-msg {
+  color: var(--text2);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* Key-value body */
+.chip-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .2rem .875rem;
+  padding: .35rem .875rem .55rem 2.4rem;
+  border-top: 1px solid rgba(255,255,255,.035);
+}
+
+.kv-row {
+  display: flex;
+  align-items: baseline;
+  gap: .3rem;
+}
+
+.kv-k {
   color: var(--text3);
-  word-break: break-all;
+  font-size: .6rem;
+  letter-spacing: .08em;
+}
+
+.kv-v {
+  color: var(--text2);
+  font-size: .68rem;
 }
 
 /* ── Thinking indicator ──────────────────────────────────── */

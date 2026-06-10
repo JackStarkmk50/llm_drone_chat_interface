@@ -141,10 +141,35 @@ const TOOLS = [
   }
 ];
 
-const SYSTEM = `You are a drone flight controller AI. You control a real quadcopter via tool calls.
-When the user gives a flight command, call the appropriate tool(s). After executing, reply in one concise sentence confirming what happened and any relevant info.
-Safety rules: warn if battery < 11V, GPS fix < 3, or command seems dangerous. Refuse clearly unsafe commands.
-Never fabricate tool results.`;
+const SYSTEM = `You are a drone flight controller AI assistant. You control a real quadcopter through tool calls.
+
+## Core rule
+When the user gives ANY flight command, navigation request, or asks about drone state — you MUST call the appropriate tool immediately. Never describe what you would do. Just do it by calling the tool.
+
+## How to respond
+1. Identify which tool(s) to call from the user's message.
+2. Call the tool(s).
+3. After receiving the tool result, reply in 1-2 short sentences confirming what happened and any key info from the result (altitude, battery, mode, etc.).
+
+## Available actions (use the matching tool)
+- Check status / battery / GPS / mode → get_status
+- Arm motors → arm_drone
+- Disarm motors → disarm_drone
+- Take off to height → takeoff (altitude in metres, 0.5–10)
+- Land → land
+- Return to home → rtl
+- Hold / hover / loiter → hold
+- Move forward / backward / left / right / up / down → move (direction, distance metres, speed m/s)
+- Rotate / turn / yaw left or right → yaw (direction, degrees, speed deg/s)
+- Change flight mode → set_mode
+- Emergency stop → emergency_stop
+
+## Safety rules
+- If battery < 11 V: warn the user before executing.
+- If GPS fix < 3: warn for commands that need GPS (RTL, move).
+- Refuse commands that would clearly crash or damage the drone.
+- Never invent or guess a tool result. Use only what the tool returns.`;
+
 
 // ── Drone API ────────────────────────────────────────────────
 
@@ -198,11 +223,19 @@ async function callLLM(msgs) {
   const headers = { 'Content-Type': 'application/json' };
 
   if (cfg.llmMode === 'ollama') {
-    const r = await fetch(cfg.llmUrl.replace(/\/+$/, '') + '/api/chat', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ model: cfg.model, messages: msgs, tools: TOOLS, stream: false })
-    });
+    let r;
+    try {
+      r = await fetch(cfg.llmUrl.replace(/\/+$/, '') + '/api/chat', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ model: cfg.model, messages: msgs, tools: TOOLS, stream: false })
+      });
+    } catch (e) {
+      const hint = e.message.toLowerCase().includes('fetch')
+        ? ' — Ollama CORS blocked. Fix: run  $env:OLLAMA_ORIGINS="*"  then restart Ollama.'
+        : '';
+      throw new Error(e.message + hint);
+    }
     if (!r.ok) throw new Error(`Ollama HTTP ${r.status}`);
     const d   = await r.json();
     const msg = d.message ?? {};
@@ -390,27 +423,60 @@ function hideThinking() {
   if (thinkEl) { thinkEl.remove(); thinkEl = null; }
 }
 
+function kvRows(obj, skip = []) {
+  const SKIP = new Set(skip);
+  return Object.entries(obj)
+    .filter(([k, v]) => !SKIP.has(k) && v !== null && v !== undefined)
+    .slice(0, 10)
+    .map(([k, v]) => {
+      const display = typeof v === 'boolean' ? (v ? 'YES' : 'NO')
+                    : typeof v === 'number'  ? String(v)
+                    : String(v).length > 40  ? String(v).slice(0, 40) + '…'
+                    : String(v);
+      return `<div class="kv-row"><span class="kv-k">${esc(k)}</span><span class="kv-v">${esc(display)}</span></div>`;
+    }).join('');
+}
+
 function showToolCall(name, args) {
-  const el  = document.createElement('div');
+  const el = document.createElement('div');
   el.className = 'tool-chip call';
-  const str = Object.keys(args).length ? JSON.stringify(args) : '';
+  const body = Object.keys(args).length ? `<div class="chip-body">${kvRows(args)}</div>` : '';
   el.innerHTML = `
-    <span class="chip-ico call">⚡</span>
-    <span class="chip-tag call">CALL</span>
-    <span class="chip-name">${esc(name)}</span>
-    ${str ? `<span class="chip-args">${esc(str)}</span>` : ''}`;
+    <div class="chip-head">
+      <span class="chip-ico call">⚡</span>
+      <span class="chip-tag call">CALL</span>
+      <span class="chip-fn">${esc(name)}</span>
+    </div>
+    ${body}`;
   chat().appendChild(el);
   scrollEnd();
 }
 
-function showToolResult(result) {
-  const el  = document.createElement('div');
-  el.className = 'tool-chip result';
-  const str = result.length > 220 ? result.slice(0, 220) + '…' : result;
+function showToolResult(resultStr) {
+  let ok = true, msg = '', extra = {};
+
+  try {
+    const d = JSON.parse(resultStr);
+    ok  = d.success !== false && !d.error;
+    msg = d.message || d.error || '';
+    // everything except success/message/error goes to extra kv grid
+    const SKIP = ['success', 'message', 'error'];
+    Object.entries(d).forEach(([k, v]) => { if (!SKIP.includes(k)) extra[k] = v; });
+  } catch {
+    ok  = false;
+    msg = resultStr.length > 160 ? resultStr.slice(0, 160) + '…' : resultStr;
+  }
+
+  const el = document.createElement('div');
+  el.className = `tool-chip result ${ok ? 'ok' : 'fail'}`;
+  const bodyHtml = Object.keys(extra).length ? `<div class="chip-body">${kvRows(extra)}</div>` : '';
   el.innerHTML = `
-    <span class="chip-ico result">✓</span>
-    <span class="chip-tag result">RESULT</span>
-    <span class="chip-args">${esc(str)}</span>`;
+    <div class="chip-head">
+      <span class="chip-ico ${ok ? 'ok' : 'fail'}">${ok ? '✓' : '✗'}</span>
+      <span class="chip-tag ${ok ? 'ok' : 'fail'}">${ok ? 'OK' : 'ERR'}</span>
+      ${msg ? `<span class="chip-msg">${esc(msg)}</span>` : ''}
+    </div>
+    ${bodyHtml}`;
   chat().appendChild(el);
   scrollEnd();
 }
@@ -418,7 +484,12 @@ function showToolResult(result) {
 function addError(msg) {
   const el = document.createElement('div');
   el.className = 'tool-chip error';
-  el.innerHTML = `<span class="chip-ico">✗</span> ${esc(msg)}`;
+  el.innerHTML = `
+    <div class="chip-head">
+      <span class="chip-ico fail">✗</span>
+      <span class="chip-tag fail">ERR</span>
+      <span class="chip-msg">${esc(msg)}</span>
+    </div>`;
   chat().appendChild(el);
   scrollEnd();
 }
