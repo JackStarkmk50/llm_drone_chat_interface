@@ -132,9 +132,12 @@ return to home
 hold position
 emergency stop
 set mode to LOITER
+set mode to GUIDED_NOGPS
 ```
 
 The LLM understands natural phrasing — you don't need to use exact keywords.
+
+> **Move speed:** The server enforces **0.2–0.3 m/s** for all move commands (indoor AI safety limit). The LLM defaults to 0.3 m/s. Asking for higher speeds returns a 400 error from the drone server.
 
 ---
 
@@ -149,6 +152,8 @@ The LLM understands natural phrasing — you don't need to use exact keywords.
 | Chat shows **Ollama HTTP 500** | Model not pulled | Run `ollama pull qwen2.5:7b` |
 | LLM responds but doesn't call tools | Model too small / wrong prompt | Use `qwen2.5:7b` or larger; avoid tiny models like `phi3:mini` |
 | Drone shows online but command fails | Drone not armed / no GPS | Check the dashboard for status before commanding |
+| Drone API CORS blocked from GitHub Pages | ngrok intercepts requests without bypass header | Drone API calls already include `ngrok-skip-browser-warning` header automatically. Ensure the Pi server has `after_request` CORS hook (see server docs). |
+| Move command returns HTTP 400 | Speed out of range | Server enforces 0.2–0.3 m/s. LLM uses 0.3 m/s default. |
 
 ---
 
