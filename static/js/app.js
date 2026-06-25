@@ -27,7 +27,7 @@ const TOOLS = [
     type: 'function',
     function: {
       name: 'arm_drone',
-      description: 'Arm the drone motors. Requires GUIDED mode and GPS fix >= 3.',
+      description: 'Arm the drone motors. Returns immediately; arming completes in background (up to 15 s).',
       parameters: { type: 'object', properties: {} }
     }
   },
@@ -73,7 +73,7 @@ const TOOLS = [
     type: 'function',
     function: {
       name: 'hold',
-      description: 'Hold current position. Uses LOITER if GPS available, ALTHOLD otherwise.',
+      description: 'Hold current position. Sets LOITER mode and cancels any active movement command.',
       parameters: { type: 'object', properties: {} }
     }
   },
@@ -91,7 +91,7 @@ const TOOLS = [
             description: 'Direction to move'
           },
           distance: { type: 'number', description: 'Distance in meters' },
-          speed:    { type: 'number', description: 'Speed in m/s (default: 0.5)' }
+          speed:    { type: 'number', description: 'Speed in m/s — must be 0.2 to 0.3 (default: 0.3)' }
         },
         required: ['direction', 'distance']
       }
@@ -123,7 +123,7 @@ const TOOLS = [
         properties: {
           mode: {
             type: 'string',
-            enum: ['STABILIZE', 'ALTHOLD', 'LOITER', 'GUIDED', 'LAND', 'RTL', 'AUTO', 'POSHOLD'],
+            enum: ['STABILIZE', 'ALTHOLD', 'LOITER', 'GUIDED', 'GUIDED_NOGPS', 'LAND', 'RTL', 'AUTO', 'POSHOLD'],
             description: 'Flight mode name'
           }
         },
@@ -159,13 +159,13 @@ When the user gives ANY flight command, navigation request, or asks about drone 
 - Land → land
 - Return to home → rtl
 - Hold / hover / loiter → hold
-- Move forward / backward / left / right / up / down → move (direction, distance metres, speed m/s)
+- Move forward / backward / left / right / up / down → move (direction, distance metres, speed 0.2–0.3 m/s)
 - Rotate / turn / yaw left or right → yaw (direction, degrees, speed deg/s)
 - Change flight mode → set_mode
 - Emergency stop → emergency_stop
 
 ## Safety rules
-- If battery < 11 V: warn the user before executing.
+- If battery < 13.2 V: warn the user before executing (4S pack minimum for takeoff).
 - If GPS fix < 3: warn for commands that need GPS (RTL, move).
 - Refuse commands that would clearly crash or damage the drone.
 - Never invent or guess a tool result. Use only what the tool returns.`;
@@ -181,7 +181,11 @@ const DRONE_HEADERS = {
 async function droneCall(endpoint, body = null) {
   const base   = cfg.droneUrl.replace(/\/+$/, '');
   const method = body === null ? 'GET' : 'POST';
-  const opts   = { method, headers: { ...DRONE_HEADERS } };
+  // GET requests omit Content-Type (no body) to avoid triggering CORS preflight
+  const headers = method === 'GET'
+    ? { 'ngrok-skip-browser-warning': 'true' }
+    : { ...DRONE_HEADERS };
+  const opts = { method, headers };
   if (body !== null) opts.body = JSON.stringify(body);
   const r = await fetch(base + endpoint, opts);
   if (!r.ok) throw new Error(`Drone API ${r.status}`);
@@ -200,7 +204,7 @@ async function executeTool(name, args) {
       case 'land':           data = await droneCall('/land', {}); break;
       case 'rtl':            data = await droneCall('/rtl', {}); break;
       case 'hold':           data = await droneCall('/hold', {}); break;
-      case 'move':           data = await droneCall('/move', { direction: args.direction, distance: args.distance, speed: args.speed ?? 0.5 }); break;
+      case 'move':           data = await droneCall('/move', { direction: args.direction, distance: args.distance, speed: args.speed ?? 0.3 }); break;
       case 'yaw':            data = await droneCall('/yaw', { direction: args.direction, degrees: args.degrees, speed: args.speed ?? 30 }); break;
       case 'set_mode':       data = await droneCall('/mode', { mode: args.mode }); break;
       case 'emergency_stop': data = await droneCall('/emergency', {}); break;
