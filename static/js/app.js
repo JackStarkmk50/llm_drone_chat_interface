@@ -73,7 +73,7 @@ const TOOLS = [
     type: 'function',
     function: {
       name: 'hold',
-      description: 'Hold current position. Sets LOITER mode and cancels any active movement command.',
+      description: 'Cancel any active movement and hold position in GUIDED_NOGPS mode.',
       parameters: { type: 'object', properties: {} }
     }
   },
@@ -138,6 +138,40 @@ const TOOLS = [
       description: 'EMERGENCY: immediately land and disarm the drone',
       parameters: { type: 'object', properties: {} }
     }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'run_mission',
+      description: 'Run a sequence of named commands as an automated mission. Executes steps one at a time in a background thread. Valid cmd values: takeoff, land, hold, hover, move_forward, move_backward, move_left, move_right, move_up, move_down, yaw_right, yaw_left.',
+      parameters: {
+        type: 'object',
+        properties: {
+          steps: {
+            type: 'array',
+            description: 'Ordered list of mission steps. Each step: {"cmd": "move_forward", "distance": 1.0, "speed": 0.3}. takeoff uses "altitude". hover uses "duration". yaw_* use "degrees" and "speed".',
+            items: { type: 'object' }
+          }
+        },
+        required: ['steps']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'mission_status',
+      description: 'Get current mission status: active, current_step, steps_done, last_result, error.',
+      parameters: { type: 'object', properties: {} }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'cancel_mission',
+      description: 'Cancel the currently running mission.',
+      parameters: { type: 'object', properties: {} }
+    }
   }
 ];
 
@@ -158,15 +192,18 @@ When the user gives ANY flight command, navigation request, or asks about drone 
 - Take off to height → takeoff (altitude in metres, 0.5–10)
 - Land → land
 - Return to home → rtl
-- Hold / hover / loiter → hold
+- Hold / hover / stop in place → hold (cancels movement, stays in GUIDED_NOGPS)
 - Move forward / backward / left / right / up / down → move (direction, distance metres, speed 0.2–0.3 m/s)
 - Rotate / turn / yaw left or right → yaw (direction, degrees, speed deg/s)
 - Change flight mode → set_mode
 - Emergency stop → emergency_stop
+- Run a sequence of steps automatically → run_mission (build steps array with cmd + params)
+- Check mission progress → mission_status
+- Stop running mission → cancel_mission
 
 ## Safety rules
 - If battery < 13.2 V: warn the user before executing (4S pack minimum for takeoff).
-- If GPS fix < 3: warn for commands that need GPS (RTL, move).
+- If GPS fix < 3: warn only for RTL (needs GPS). Move and takeoff work without GPS via GUIDED_NOGPS + rangefinder.
 - Refuse commands that would clearly crash or damage the drone.
 - Never invent or guess a tool result. Use only what the tool returns.`;
 
@@ -208,6 +245,9 @@ async function executeTool(name, args) {
       case 'yaw':            data = await droneCall('/yaw', { direction: args.direction, degrees: args.degrees, speed: args.speed ?? 30 }); break;
       case 'set_mode':       data = await droneCall('/mode', { mode: args.mode }); break;
       case 'emergency_stop': data = await droneCall('/emergency', {}); break;
+      case 'run_mission':    data = await droneCall('/mission', { steps: args.steps }); break;
+      case 'mission_status': data = await droneCall('/mission/status'); break;
+      case 'cancel_mission': data = await droneCall('/mission/cancel', {}); break;
       default: return JSON.stringify({ error: `Unknown tool: ${name}` });
     }
     return JSON.stringify(data);
@@ -537,7 +577,7 @@ async function checkDroneConn() {
 
   try {
     const r = await fetch(cfg.droneUrl + '/health', {
-      headers: { ...DRONE_HEADERS },
+      headers: { 'ngrok-skip-browser-warning': 'true' },
       signal: ctrl.signal
     });
     clearTimeout(timer);

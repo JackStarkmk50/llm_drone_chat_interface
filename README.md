@@ -133,11 +133,16 @@ hold position
 emergency stop
 set mode to LOITER
 set mode to GUIDED_NOGPS
+run a mission: take off to 1.5m, move forward 2m, yaw right 90 degrees, land
+check mission status
+cancel the mission
 ```
 
 The LLM understands natural phrasing — you don't need to use exact keywords.
 
 > **Move speed:** The server enforces **0.2–0.3 m/s** for all move commands (indoor AI safety limit). The LLM defaults to 0.3 m/s. Asking for higher speeds returns a 400 error from the drone server.
+
+> **Move without GPS:** Move and takeoff both work without a GPS fix — the server uses GUIDED_NOGPS mode with rangefinder altitude feedback. Only RTL requires GPS.
 
 ---
 
