@@ -665,6 +665,149 @@ body::after {
   opacity: .4;
 }
 
+/* ── Camera Panel ────────────────────────────────────────── */
+/* Floating toggle sits under the config bar, right edge. The panel itself is
+   an overlay so it never reflows the chat column. */
+.cam-open {
+  position: fixed;
+  right: 1rem;
+  top: 72px;
+  z-index: 20;
+  width: 34px;
+  height: 34px;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  color: var(--text2);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color .15s, border-color .15s, box-shadow .15s;
+}
+
+.cam-open:hover { color: var(--green); border-color: var(--green-dim); }
+
+.cam-open.live {
+  color: var(--green);
+  border-color: rgba(52, 217, 101, 0.35);
+  box-shadow: 0 0 8px var(--green-glow);
+}
+
+.cam-panel {
+  position: fixed;
+  right: 1rem;
+  top: 114px;
+  z-index: 20;
+  width: 380px;
+  max-width: calc(100vw - 2rem);
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.cam-panel.hidden { display: none; }
+
+.cam-head {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .45rem .625rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+}
+
+.cam-title {
+  font-family: var(--mono);
+  font-size: .62rem;
+  letter-spacing: .16em;
+  color: var(--text2);
+}
+
+.cam-state {
+  font-family: var(--mono);
+  font-size: .6rem;
+  letter-spacing: .1em;
+  padding: .1rem .4rem;
+  border-radius: 2px;
+  color: var(--text3);
+  background: var(--bg4);
+}
+
+.cam-state.live { color: var(--green); background: rgba(52, 217, 101, 0.12); }
+.cam-state.err  { color: var(--red);   background: var(--red-dim); }
+.cam-state.busy { color: var(--amber); background: var(--amber-dim); }
+
+.cam-spacer { flex: 1; }
+
+.cam-btn {
+  font-family: var(--mono);
+  font-size: .6rem;
+  letter-spacing: .1em;
+  padding: .25rem .55rem;
+  background: var(--green-dim);
+  border: 1px solid rgba(52, 217, 101, 0.35);
+  color: var(--green);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background .15s;
+}
+
+.cam-btn:hover:not(:disabled) { background: rgba(52, 217, 101, 0.25); }
+.cam-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+.cam-btn.stop {
+  background: var(--red-dim);
+  border-color: rgba(244, 63, 63, 0.35);
+  color: var(--red);
+}
+
+.cam-btn.ghost {
+  background: transparent;
+  border-color: var(--border2);
+  color: var(--text3);
+}
+
+.cam-btn.ghost:hover { color: var(--text); }
+
+.cam-body {
+  position: relative;
+  background: #000;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cam-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: none;
+}
+
+.cam-img.live { display: block; }
+
+.cam-placeholder {
+  font-family: var(--mono);
+  font-size: .62rem;
+  letter-spacing: .16em;
+  color: var(--text4);
+  text-align: center;
+  padding: 0 1rem;
+}
+
+/* system note chip — server-side warnings (nav disabled, tracker off) */
+.tool-chip.note {
+  border-color: rgba(245, 158, 11, 0.3);
+  background: var(--amber-dim);
+}
+
 /* ── Mobile ──────────────────────────────────────────────── */
 @media (max-width: 700px) {
   .cfg-bar { gap: .625rem; padding: .625rem 1rem; }
@@ -676,4 +819,6 @@ body::after {
   .input-bar { padding: .75rem 1rem; }
   .hints { display: none; }
   .welcome-card { flex-direction: column; gap: .75rem; padding: 1rem; }
+  .cam-open  { top: auto; bottom: 110px; right: .75rem; }
+  .cam-panel { top: auto; bottom: 152px; right: .75rem; left: .75rem; width: auto; }
 }

@@ -62,6 +62,26 @@
   </div>
 </header>
 
+<!-- ── Camera Panel ───────────────────────────────────────── -->
+<!-- The camera_start / camera_stop tools are useless without somewhere to see
+     the result, so the stream lives here. Same MJPEG endpoint the webapp uses:
+     multipart/x-mixed-replace straight into an <img>. -->
+<button id="cam-open" class="cam-open" title="Toggle camera">▣</button>
+
+<div id="cam-panel" class="cam-panel hidden">
+  <div class="cam-head">
+    <span class="cam-title">CAMERA</span>
+    <span id="cam-state" class="cam-state">OFF</span>
+    <div class="cam-spacer"></div>
+    <button id="cam-toggle" class="cam-btn">START</button>
+    <button id="cam-close" class="cam-btn ghost">✕</button>
+  </div>
+  <div class="cam-body">
+    <img id="cam-img" class="cam-img" alt="">
+    <div id="cam-placeholder" class="cam-placeholder">STREAM OFFLINE</div>
+  </div>
+</div>
+
 <!-- ── Chat Area ──────────────────────────────────────────── -->
 <main id="chat-area" class="chat-area">
   <div id="chat-inner" class="chat-inner">
@@ -74,8 +94,9 @@
           Configure your drone + LLM connection above, then issue flight commands in natural language.
         </div>
         <div class="welcome-examples">
-          <div class="example-item"><span class="ex-badge">NLP</span>"Arm the drone and take off to 3 meters"</div>
-          <div class="example-item"><span class="ex-badge">NLP</span>"Move forward 2 meters then rotate right 90 degrees"</div>
+          <div class="example-item"><span class="ex-badge">NLP</span>"Arm the drone and take off to 1.5 meters"</div>
+          <div class="example-item"><span class="ex-badge">NLP</span>"Fly to 2 metres north, then 1 metre east"</div>
+          <div class="example-item"><span class="ex-badge">NLP</span>"Nudge left for half a second"</div>
           <div class="example-item"><span class="ex-badge">NLP</span>"What is the current battery level and GPS status?"</div>
           <div class="example-item"><span class="ex-badge">NLP</span>"Land immediately, the battery is getting low"</div>
         </div>
@@ -98,11 +119,11 @@
     </button>
   </div>
   <div class="hints">
-    <span class="hint" data-cmd="take off to 3 meters">"take off to 3 meters"</span>
+    <span class="hint" data-cmd="take off to 1.5 meters">"take off to 1.5m"</span>
     <span class="hint-dot">·</span>
-    <span class="hint" data-cmd="move forward 2 meters">"move forward 2m"</span>
+    <span class="hint" data-cmd="fly to 2 metres north of the arm point">"go 2m north"</span>
     <span class="hint-dot">·</span>
-    <span class="hint" data-cmd="rotate right 90 degrees">"rotate 90° right"</span>
+    <span class="hint" data-cmd="nudge left for 1 second">"nudge left 1s"</span>
     <span class="hint-dot">·</span>
     <span class="hint" data-cmd="what is the drone status">"drone status"</span>
     <span class="hint-dot">·</span>
